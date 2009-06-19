@@ -28,6 +28,7 @@ from gtk import gdk
 import threading
 import commands
 import os.path
+from deskbar.handlers.actions.OpenWithApplicationAction import OpenWithApplicationAction
 
 #from deskbar.handlers.actions.OpenWithApplicationAction import OpenWithApplicationAction
 from deskbar.handlers.actions.ShowUrlAction import ShowUrlAction
@@ -220,7 +221,30 @@ if USED_PLAYER!="rhythmbox" and USED_PLAYER!="exaile":
 	print "player "+USED_PLAYER+"is not supported"
 
 
-#generic classes: Lyrics, Last.fm libre.fm
+##sendto
+class SendToAction(OpenWithApplicationAction):
+    
+    def __init__(self, song, artist, uri):
+        OpenWithApplicationAction.__init__(self, song, "nautilus-sendto", [uri])
+        self._song = song
+        self._artist = artist
+    
+    def get_icon(self):
+        return "stock_edit"
+    
+    def get_name(self, text=None):
+        return {
+            "song": self._song,
+            "artist": self._artist,
+        }
+    
+    def get_verb(self):
+        #translators: First %s is the contact full name, second %s is the email address
+        return "Send song <b>"+self._song+"</b> by ("+self._artist+')'
+
+
+
+
 
 ##lyrics
 class DeskRhythmLyricAction(deskbar.interfaces.Action):
@@ -344,6 +368,8 @@ if USED_PLAYER=="rhythmbox":
 				self.add_action( DeskRhythmLyricAction(self.song,self.artist,self.album))
 				self.add_action( SearchLastFMAction(self.song,self.artist,self.album))
 				self.add_action( SearchLibreFMAction(self.song,self.artist,self.album))
+				self.add_action(SendToAction(self.song, self.artist, self.uri) )
+
 
 		 def get_hash(self, text=None):
 				return "match"+self.song+self.artist+self.album
@@ -357,8 +383,8 @@ if USED_PLAYER=="rhythmbox":
 	class DeskRhythmHandler(deskbar.interfaces.Module):
 		 INFOS = {	'icon':		deskbar.core.Utils.load_icon('audio-x-generic'),
 						 'name':		'RhythmDesk',
-						 'description':	'Search and change Rhythmbox playing song, get lyrics, search info',
-						 'version':		'0.0.8'
+						 'description':	'Search and change Rhythmbox playing song, get lyrics, search info, send yout music',
+						 'version':		'0.0.9'
 		 }
 
 		 def __init__(self):
@@ -462,6 +488,7 @@ if USED_PLAYER=="exaile":
 			self.add_action( DeskRhythmLyricAction(self._song['title'],self._song['artist'],self._song['album']))
 			self.add_action( SearchLastFMAction(self._song['title'],self._song['artist'],self._song['album']))
 			self.add_action( SearchLibreFMAction( self._song['title'], self._song['artist'],self._song['album']))
+			self.add_action(SendToAction(self._song['title'], self._song['artist'], self._song['path']) )
 
 		def __lt__(self, other):
 			"""Compare match objects; more relevant matches go first when sorted."""
